@@ -17,7 +17,9 @@ Route::post('/logout', [LogoutController::class, 'store'])->middleware('auth')->
 
 Route::middleware('auth')->group(function () {
     Route::get('/', fn () => redirect()->route('dashboard'));
-    Route::get('/dashboard', fn () => view('layouts.stub', ['title' => 'Dashboard']))->name('dashboard');
+    Route::get('/dashboard', [ServerController::class, 'index'])->name('dashboard');
+    Route::patch('/servers/{server}/status', [ServerController::class, 'updateStatus'])->name('servers.status');
 
-    Route::resource('servers', ServerController::class);
+    Route::get('/servers', fn () => redirect()->route('dashboard'))->name('servers.index');
+    Route::resource('servers', ServerController::class)->except('index');
 });

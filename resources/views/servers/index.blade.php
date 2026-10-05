@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Servers')
+@section('title', 'Dashboard')
 
 @section('content')
     @if (session('status'))
@@ -9,31 +9,135 @@
         </div>
     @endif
 
+    @php
+        $sortUrl = fn (string $column) => request()->fullUrlWithQuery([
+            'sort' => $column,
+            'dir' => $filters['sort'] === $column && $filters['dir'] === 'asc' ? 'desc' : 'asc',
+        ]);
+        $sortMark = fn (string $column) => $filters['sort'] === $column ? ($filters['dir'] === 'asc' ? ' ↑' : ' ↓') : '';
+        $hasFilters = $filters['status'] !== ''
+            || $filters['provider'] !== ''
+            || $filters['q'] !== ''
+            || $filters['owner'] === 'mine';
+    @endphp
+
+    {{-- Stat cards --}}
+    <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <p class="text-xs text-slate-500 dark:text-slate-400">Total servers</p>
+            <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $stats['total'] }}</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <p class="text-xs text-slate-500 dark:text-slate-400">Active</p>
+            <p class="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ $stats['active'] }}</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <p class="text-xs text-slate-500 dark:text-slate-400">Payment required</p>
+            <p class="mt-1 text-2xl font-bold text-rose-600 dark:text-rose-400">{{ $stats['payment'] }}</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <p class="text-xs text-slate-500 dark:text-slate-400">Inactive</p>
+            <p class="mt-1 text-2xl font-bold text-slate-500 dark:text-slate-400">{{ $stats['inactive'] }}</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <p class="text-xs text-slate-500 dark:text-slate-400">Apps deployed</p>
+            <p class="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $stats['apps'] }}</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <p class="text-xs text-slate-500 dark:text-slate-400">Renewals due ≤30d</p>
+            <p class="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">{{ $stats['dueSoon'] }}</p>
+        </div>
+    </div>
+
+    {{-- Filter bar --}}
+    <form method="GET" action="{{ route('dashboard') }}" class="mb-4 flex flex-wrap items-center gap-2">
+        <select name="status"
+            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+            <option value="">All statuses</option>
+            @foreach (\App\Enums\ServerStatus::cases() as $statusOption)
+                <option value="{{ $statusOption->value }}" @selected($filters['status'] === $statusOption->value)>{{ $statusOption->label() }}</option>
+            @endforeach
+        </select>
+
+        <select name="provider"
+            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+            <option value="">All providers</option>
+            @foreach ($providers as $providerOption)
+                <option value="{{ $providerOption }}" @selected($filters['provider'] === $providerOption)>{{ $providerOption }}</option>
+            @endforeach
+        </select>
+
+        <select name="owner"
+            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+            <option value="all" @selected($filters['owner'] === 'all')">Everyone's servers</option>
+            <option value="mine" @selected($filters['owner'] === 'mine')">Mine only</option>
+        </select>
+
+        <input type="text" name="q" value="{{ $filters['q'] }}" placeholder="Search name, IP, OS…"
+            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+
+        @if ($filters['sort'] !== '')
+            <input type="hidden" name="sort" value="{{ $filters['sort'] }}">
+        @endif
+        @if ($filters['dir'] !== '')
+            <input type="hidden" name="dir" value="{{ $filters['dir'] }}">
+        @endif
+
+        <button type="submit"
+            class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
+            Filter
+        </button>
+        <a href="{{ route('dashboard') }}"
+            class="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+            Clear
+        </a>
+    </form>
+
     @if ($servers->isEmpty())
-        <div class="rounded-lg border border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-slate-500 dark:text-slate-400">No servers yet — add your first VPS</p>
-            <a href="{{ route('servers.create') }}"
-                class="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500">Add server</a>
+        <div class="rounded-lg border-2 border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
+            @if ($hasFilters)
+                <p class="text-slate-500 dark:text-slate-400">No matches for these filters</p>
+                <a href="{{ route('dashboard') }}"
+                    class="mt-4 inline-block rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+                    Clear filters
+                </a>
+            @else
+                <p class="text-slate-500 dark:text-slate-400">No servers yet — add your first VPS</p>
+                <a href="{{ route('servers.create') }}"
+                    class="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500">
+                    Add server
+                </a>
+            @endif
         </div>
     @else
         <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <table class="w-full text-left text-sm">
                 <thead class="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-800 dark:text-slate-400">
                     <tr>
-                        <th class="px-4 py-3 font-medium">Name</th>
-                        <th class="px-4 py-3 font-medium">Status</th>
+                        <th class="px-4 py-3 font-medium">
+                            <a href="{{ $sortUrl('name') }}" class="hover:underline">Name{{ $sortMark('name') }}</a>
+                        </th>
+                        <th class="px-4 py-3 font-medium">
+                            <a href="{{ $sortUrl('status') }}" class="hover:underline">Status{{ $sortMark('status') }}</a>
+                        </th>
                         <th class="px-4 py-3 font-medium">IP</th>
                         <th class="px-4 py-3 font-medium">OS</th>
                         <th class="px-4 py-3 font-medium">Provider</th>
-                        <th class="px-4 py-3 font-medium">Apps</th>
-                        <th class="px-4 py-3 font-medium">Renewal</th>
+                        <th class="px-4 py-3 font-medium">
+                            <a href="{{ $sortUrl('deployed_apps_count') }}" class="hover:underline">Apps{{ $sortMark('deployed_apps_count') }}</a>
+                        </th>
+                        <th class="px-4 py-3 font-medium">
+                            <a href="{{ $sortUrl('renewal_date') }}" class="hover:underline">Renewal{{ $sortMark('renewal_date') }}</a>
+                        </th>
                         <th class="px-4 py-3 font-medium">Owner</th>
                         <th class="px-4 py-3 font-medium">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
                     @foreach ($servers as $server)
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        @php($warning = $server->billingWarning())
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50{{ $warning ? ' bg-rose-50 dark:bg-rose-950/40' : '' }}"
+                            @if ($warning) data-billing-warning="1" @endif>
                             <td class="px-4 py-3">
                                 <a href="{{ route('servers.show', $server) }}" class="font-medium text-blue-600 hover:underline">{{ $server->name }}</a>
                             </td>
@@ -42,7 +146,7 @@
                                     &#9679; {{ $server->status->label() }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 font-mono">{{ $server->ip_address }}</td>
+                            <td class="px-4 py-3 font-mono text-xs">{{ $server->ip_address }}</td>
                             <td class="px-4 py-3">{{ $server->operating_system }}</td>
                             <td class="px-4 py-3">{{ $server->provider }}</td>
                             <td class="px-4 py-3">{{ $server->deployed_apps_count }}</td>
@@ -51,9 +155,17 @@
                             </td>
                             <td class="px-4 py-3">{{ $server->owner?->name ?? '—' }}</td>
                             <td class="px-4 py-3">
-                                <div class="flex gap-2">
+                                <div class="flex gap-2 text-xs">
                                     @can('update', $server)
-                                        <a href="{{ route('servers.edit', $server) }}" class="text-blue-600 hover:underline">Edit</a>
+                                        <form method="POST" action="{{ route('servers.status', $server) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="status"
+                                                value="{{ $server->status === \App\Enums\ServerStatus::Active ? 'inactive' : 'active' }}">
+                                            <button type="submit" class="text-slate-600 hover:underline dark:text-slate-300">
+                                                {{ $server->status === \App\Enums\ServerStatus::Active ? 'Set inactive' : 'Set active' }}
+                                            </button>
+                                        </form>
                                     @endcan
                                     @can('delete', $server)
                                         <form method="POST" action="{{ route('servers.destroy', $server) }}"
@@ -69,6 +181,10 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+
+        <div class="mt-4">
+            {{ $servers->links() }}
         </div>
     @endif
 

@@ -23,6 +23,8 @@ Implemented so far:
 - Dark/light theme shell with top navigation
 - Authorization: members manage their own servers, admins manage all
 - Server CRUD: add/edit/view/delete (confirmation modal), validation incl. unique IPv4/IPv6
+- Dashboard: stat cards, filters (status/provider/mine/search), sortable columns,
+  renewal urgency coloring, inline status toggle, pagination, empty states
 
 ## Setup
 

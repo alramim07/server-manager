@@ -13,11 +13,73 @@ use Illuminate\View\View;
 
 class ServerController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        return view('servers.index', [
-            'servers' => Server::with('owner')->latest()->get(),
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'status' => ['nullable', Rule::enum(ServerStatus::class)],
+            'provider' => ['nullable', 'string', 'max:80'],
+            'owner' => ['nullable', 'string', 'in:mine,all'],
+            'q' => ['nullable', 'string', 'max:80'],
+            'sort' => ['nullable', Rule::in(['name', 'status', 'renewal_date', 'deployed_apps_count', 'created_at'])],
+            'dir' => ['nullable', 'string', 'in:asc,desc'],
         ]);
+
+        $search = $validated['q'] ?? null;
+
+        $servers = Server::query()->with('owner')
+            ->when($validated['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
+            ->when($validated['provider'] ?? null, fn ($q, $provider) => $q->where('provider', $provider))
+            ->when(($validated['owner'] ?? null) === 'mine', fn ($q) => $q->where('owner_id', $user->id))
+            ->when($search, function ($q, $search) {
+                $like = '%'.$search.'%';
+                $q->where(fn ($w) => $w->where('name', 'like', $like)
+                    ->orWhere('ip_address', 'like', $like)
+                    ->orWhere('provider', 'like', $like)
+                    ->orWhere('operating_system', 'like', $like));
+            })
+            ->orderBy($validated['sort'] ?? 'created_at', $validated['dir'] ?? 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        $statusCounts = Server::query()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        return view('servers.index', [
+            'servers' => $servers,
+            'providers' => $this->providers(),
+            'stats' => [
+                'total' => (int) $statusCounts->sum(),
+                'active' => (int) ($statusCounts[ServerStatus::Active->value] ?? 0),
+                'payment' => (int) ($statusCounts[ServerStatus::PaymentRequired->value] ?? 0),
+                'inactive' => (int) ($statusCounts[ServerStatus::Inactive->value] ?? 0),
+                'apps' => (int) Server::sum('deployed_apps_count'),
+                'dueSoon' => Server::whereNotNull('renewal_date')
+                    ->whereDate('renewal_date', '<=', now()->addDays(30)->toDateString())->count(),
+            ],
+            'filters' => [
+                'status' => $validated['status'] ?? '',
+                'provider' => $validated['provider'] ?? '',
+                'owner' => $validated['owner'] ?? 'all',
+                'q' => $validated['q'] ?? '',
+                'sort' => $validated['sort'] ?? '',
+                'dir' => $validated['dir'] ?? '',
+            ],
+        ]);
+    }
+
+    public function updateStatus(Request $request, Server $server): RedirectResponse
+    {
+        Gate::authorize('update', $server);
+
+        $request->validate(['status' => ['required', Rule::enum(ServerStatus::class)]]);
+
+        $server->update(['status' => ServerStatus::from($request->string('status')->toString())]);
+
+        return redirect()->route('dashboard')->with('status', 'Status updated.');
     }
 
     public function create(): View
@@ -69,7 +131,7 @@ class ServerController extends Controller
 
         $server->delete();
 
-        return redirect()->route('servers.index')->with('status', 'Server deleted.');
+        return redirect()->route('dashboard')->with('status', 'Server deleted.');
     }
 
     private function validateServer(Request $request, ?Server $server = null): array

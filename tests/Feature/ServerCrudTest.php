@@ -99,8 +99,18 @@ class ServerCrudTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $server = Server::factory()->create();
 
-        $this->actingAs($admin)->delete("/servers/{$server->id}")->assertRedirect(route('servers.index'));
+        $this->actingAs($admin)->delete("/servers/{$server->id}")->assertRedirect('/dashboard');
         $this->assertDatabaseMissing('servers', ['id' => $server->id]);
+    }
+
+    public function test_delete_confirmation_flash_shows_on_the_dashboard(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $server = Server::factory()->create();
+
+        $this->actingAs($admin)->delete("/servers/{$server->id}")->assertRedirect('/dashboard');
+
+        $this->get('/dashboard')->assertSee('Server deleted.');
     }
 
     public function test_member_cannot_delete_a_foreign_server(): void
@@ -142,7 +152,7 @@ class ServerCrudTest extends TestCase
         $server = Server::factory()->create(['owner_id' => $user->id, 'name' => 'index-hero-box']);
 
         $this->actingAs($user)
-            ->get('/servers')
+            ->get('/dashboard')
             ->assertOk()
             ->assertSee($server->name)
             ->assertSee('delete-dialog')
@@ -150,7 +160,7 @@ class ServerCrudTest extends TestCase
 
         $this->actingAs($user)
             ->withSession(['status' => 'Server added.'])
-            ->get('/servers')
+            ->get('/dashboard')
             ->assertOk()
             ->assertSee('Server added.');
     }
