@@ -27,7 +27,7 @@
             @auth
                 <nav class="flex flex-wrap items-center gap-1 text-sm">
                     <a href="{{ route('dashboard') }}" class="rounded-md px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800">Dashboard</a>
-                    <a href="{{ route('servers.create') }}" class="ml-2 rounded-md bg-blue-600 px-3 py-1.5 font-medium text-white hover:bg-blue-500">+ New server</a>
+                    <a href="{{ route('servers.create') }}" class="rounded-md bg-blue-600 px-3 py-1.5 font-medium text-white hover:bg-blue-500">+ New server</a>
                 </nav>
             @endauth
 
@@ -37,7 +37,7 @@
                     <span class="hidden dark:inline">☀</span><span class="dark:hidden">☾</span>
                 </button>
                 @auth
-                    <span class="text-slate-500 dark:text-slate-400">{{ auth()->user()->name }}</span>
+                    <span class="truncate max-w-[8rem] text-slate-500 dark:text-slate-400">{{ auth()->user()->name }}</span>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button class="rounded-md px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800">Log out</button>

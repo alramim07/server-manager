@@ -46,7 +46,7 @@ PHP 8.3+, Composer, Node 20+, and MySQL 8 (running locally or reachable via `DB_
 ```bash
 git clone <repo-url> server-manager && cd server-manager
 
-mysql -u root -e "CREATE DATABASE server_manager;"   # create the DB first — migrations fail otherwise
+mysql -u root -p -e "CREATE DATABASE server_manager;"   # create the DB first — migrations fail otherwise
 
 composer install
 cp .env.example .env        # then set DB_* for your database

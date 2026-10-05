@@ -18,8 +18,8 @@ class ServerStatusTest extends TestCase
         $this->assertSame('Payment required', ServerStatus::PaymentRequired->label());
         $this->assertSame('Inactive', ServerStatus::Inactive->label());
 
-        $this->assertSame('bg-emerald-100 text-emerald-800', ServerStatus::Active->badgeClass());
-        $this->assertSame('bg-rose-100 text-rose-800', ServerStatus::PaymentRequired->badgeClass());
-        $this->assertSame('bg-slate-200 text-slate-700', ServerStatus::Inactive->badgeClass());
+        $this->assertSame('bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300', ServerStatus::Active->badgeClass());
+        $this->assertSame('bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300', ServerStatus::PaymentRequired->badgeClass());
+        $this->assertSame('bg-slate-200 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300', ServerStatus::Inactive->badgeClass());
     }
 }

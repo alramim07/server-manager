@@ -49,7 +49,7 @@
     {{-- Filter bar --}}
     <form method="GET" action="{{ route('dashboard') }}" class="mb-4 flex flex-wrap items-center gap-2">
         <select name="status"
-            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
             <option value="">All statuses</option>
             @foreach (\App\Enums\ServerStatus::cases() as $statusOption)
                 <option value="{{ $statusOption->value }}" @selected($filters['status'] === $statusOption->value)>{{ $statusOption->label() }}</option>
@@ -57,7 +57,7 @@
         </select>
 
         <select name="provider"
-            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
             <option value="">All providers</option>
             @foreach ($providers as $providerOption)
                 <option value="{{ $providerOption }}" @selected($filters['provider'] === $providerOption)>{{ $providerOption }}</option>
@@ -65,13 +65,13 @@
         </select>
 
         <select name="owner"
-            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
             <option value="all" @selected($filters['owner'] === 'all')">Everyone's servers</option>
             <option value="mine" @selected($filters['owner'] === 'mine')">Mine only</option>
         </select>
 
         <input type="text" name="q" value="{{ $filters['q'] }}" placeholder="Search name, IP, OS…"
-            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
 
         @if ($filters['sort'] !== '')
             <input type="hidden" name="sort" value="{{ $filters['sort'] }}">
