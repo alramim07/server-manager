@@ -30,6 +30,7 @@ class Server extends Model
     protected function casts(): array
     {
         return [
+            'owner_id' => 'integer',
             'status' => ServerStatus::class,
             'renewal_date' => 'date:Y-m-d',
             'deployed_apps_count' => 'integer',

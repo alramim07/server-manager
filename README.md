@@ -22,6 +22,7 @@ Implemented so far:
 - Authentication: register (first user becomes admin), login, logout, role column
 - Dark/light theme shell with top navigation
 - Authorization: members manage their own servers, admins manage all
+- Server CRUD: add/edit/view/delete (confirmation modal), validation incl. unique IPv4/IPv6
 
 ## Setup
 

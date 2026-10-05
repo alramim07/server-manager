@@ -3,6 +3,7 @@
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\LogoutController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\ServerController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -17,4 +18,6 @@ Route::post('/logout', [LogoutController::class, 'store'])->middleware('auth')->
 Route::middleware('auth')->group(function () {
     Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('/dashboard', fn () => view('layouts.stub', ['title' => 'Dashboard']))->name('dashboard');
+
+    Route::resource('servers', ServerController::class);
 });

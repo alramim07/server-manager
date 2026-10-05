@@ -27,6 +27,8 @@
             @auth
                 <nav class="flex items-center gap-1 text-sm">
                     <a href="{{ route('dashboard') }}" class="rounded-md px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800">Dashboard</a>
+                    <a href="{{ route('servers.index') }}" class="rounded-md px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800">Servers</a>
+                    <a href="{{ route('servers.create') }}" class="ml-2 rounded-md bg-blue-600 px-3 py-1.5 font-medium text-white hover:bg-blue-500">+ New server</a>
                 </nav>
             @endauth
 
