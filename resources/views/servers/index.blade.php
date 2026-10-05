@@ -26,6 +26,7 @@
         $hasFilters = $filters['status'] !== ''
             || $filters['provider'] !== ''
             || $filters['q'] !== '';
+        $canDeleteAny = $servers->contains(fn ($server) => auth()->user()->can('delete', $server));
     @endphp
 
     {{-- Stat cards --}}
@@ -78,9 +79,12 @@
             Filter
         </button>
         <a href="{{ route('dashboard') }}"
-            class="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+            class="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800">
             Clear
         </a>
+        @if ($canDeleteAny)
+            @include('servers._bulk-select')
+        @endif
     </form>
 
     @if ($servers->isEmpty())
@@ -101,9 +105,15 @@
         </div>
     @else
         <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <table class="w-full min-w-[56rem] text-left text-sm">
+            <table class="w-full min-w-[60rem] text-left text-sm">
                 <thead class="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-800 dark:text-slate-400">
                     <tr>
+                        <th class="px-4 py-3 font-medium">
+                            @if ($canDeleteAny)
+                                <input type="checkbox" id="select-all-servers" aria-label="Select all servers"
+                                    class="h-4 w-4 cursor-pointer accent-blue-600">
+                            @endif
+                        </th>
                         <th class="px-4 py-3 font-medium">
                             <a href="{{ $sortUrl('name') }}" class="hover:underline">Name{{ $sortMark('name') }}</a>
                         </th>
@@ -128,6 +138,13 @@
                         @php($warning = $server->billingWarning())
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50{{ $warning ? ' bg-rose-50 dark:bg-rose-950/40' : '' }}"
                             @if ($warning) data-billing-warning="1" @endif>
+                            <td class="px-4 py-3">
+                                @can('delete', $server)
+                                    <input type="checkbox" data-select-row value="{{ $server->id }}"
+                                        aria-label="Select {{ $server->name }}"
+                                        class="h-4 w-4 cursor-pointer accent-blue-600">
+                                @endcan
+                            </td>
                             <td class="px-4 py-3">
                                 <a href="{{ route('servers.show', $server) }}" class="font-medium text-blue-600 hover:underline dark:text-blue-400">{{ $server->name }}</a>
                             </td>
@@ -161,7 +178,7 @@
                                     @endcan
                                     @can('delete', $server)
                                         <form method="POST" action="{{ route('servers.destroy', $server) }}"
-                                            data-server-name="{{ $server->name }}" data-server-ip="{{ $server->ip_address }}">
+                                            data-server-name="{{ $server->name }}" data-server-ip="{{ $server->ip_address }}" data-row-delete>
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-rose-600 hover:underline dark:text-rose-400">Delete</button>

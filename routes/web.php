@@ -21,5 +21,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/servers/{server}/status', [ServerController::class, 'updateStatus'])->name('servers.status');
 
     Route::get('/servers', fn () => redirect()->route('dashboard'))->name('servers.index');
+    Route::delete('/servers/bulk', [ServerController::class, 'bulkDestroy'])->name('servers.bulkDestroy');
     Route::resource('servers', ServerController::class)->except('index');
 });

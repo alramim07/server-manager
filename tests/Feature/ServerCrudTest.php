@@ -263,5 +263,67 @@ class ServerCrudTest extends TestCase
         $this->get("/servers/{$server->id}/edit")->assertRedirect('/login');
         $this->put("/servers/{$server->id}", [])->assertRedirect('/login');
         $this->delete("/servers/{$server->id}")->assertRedirect('/login');
+        $this->delete('/servers/bulk')->assertRedirect('/login');
+    }
+
+    public function test_bulk_delete_removes_selected_servers(): void
+    {
+        $user = User::factory()->create();
+        $first = Server::factory()->create(['owner_id' => $user->id]);
+        $second = Server::factory()->create(['owner_id' => $user->id]);
+        $untouched = Server::factory()->create(['owner_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->delete('/servers/bulk', ['ids' => [$first->id, $second->id]])
+            ->assertRedirect('/dashboard')
+            ->assertSessionHas('status', '2 servers deleted.');
+
+        $this->assertDatabaseMissing('servers', ['id' => $first->id]);
+        $this->assertDatabaseMissing('servers', ['id' => $second->id]);
+        $this->assertDatabaseHas('servers', ['id' => $untouched->id]);
+    }
+
+    public function test_bulk_delete_requires_existing_ids(): void
+    {
+        $user = User::factory()->create();
+        $server = Server::factory()->create(['owner_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->delete('/servers/bulk')
+            ->assertSessionHasErrors('ids');
+
+        $this->actingAs($user)
+            ->delete('/servers/bulk', ['ids' => [$server->id, 999999]])
+            ->assertSessionHasErrors('ids.1');
+
+        $this->assertDatabaseHas('servers', ['id' => $server->id]);
+    }
+
+    public function test_member_cannot_bulk_delete_a_foreign_server(): void
+    {
+        $member = User::factory()->create();
+        $own = Server::factory()->create(['owner_id' => $member->id]);
+        $foreign = Server::factory()->create();
+
+        $this->actingAs($member)
+            ->delete('/servers/bulk', ['ids' => [$own->id, $foreign->id]])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('servers', ['id' => $foreign->id]);
+        $this->assertDatabaseHas('servers', ['id' => $own->id]);
+    }
+
+    public function test_admin_can_bulk_delete_any_servers(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $first = Server::factory()->create();
+        $second = Server::factory()->create();
+
+        $this->actingAs($admin)
+            ->delete('/servers/bulk', ['ids' => [$first->id, $second->id]])
+            ->assertRedirect('/dashboard');
+
+        $this->assertDatabaseMissing('servers', ['id' => $first->id]);
+        $this->assertDatabaseMissing('servers', ['id' => $second->id]);
     }
 }

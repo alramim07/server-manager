@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -142,6 +143,26 @@ class ServerController extends Controller
         $server->delete();
 
         return redirect()->route('dashboard')->with('status', 'Server deleted.');
+    }
+
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer', 'distinct', 'exists:servers,id'],
+        ]);
+
+        $servers = Server::whereIn('id', $validated['ids'])->get();
+
+        foreach ($servers as $server) {
+            Gate::authorize('delete', $server);
+        }
+
+        $count = $servers->count();
+        $servers->each->delete();
+
+        return redirect()->route('dashboard')
+            ->with('status', "{$count} ".Str::plural('server', $count).' deleted.');
     }
 
     /**

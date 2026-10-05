@@ -140,6 +140,21 @@ class DashboardTest extends TestCase
         $this->assertLessThan(strpos($content, 'later-box'), strpos($content, 'sooner-box'));
     }
 
+    public function test_dashboard_renders_bulk_select_controls(): void
+    {
+        $user = User::factory()->create();
+        $server = Server::factory()->create(['owner_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('id="select-all-servers"', false)
+            ->assertSee('data-select-row value="'.$server->id.'"', false)
+            ->assertSee('id="bulk-actions"', false)
+            ->assertSee('data-bulk-action="'.route('servers.bulkDestroy').'"', false)
+            ->assertSee('data-row-delete', false);
+    }
+
     public function test_status_can_be_changed_from_the_table(): void
     {
         $user = User::factory()->create();
