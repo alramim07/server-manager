@@ -10,7 +10,7 @@
             @csrf
             @method('PUT')
 
-            @include('servers._form', ['server' => $server, 'cancelUrl' => route('servers.show', $server)])
+            @include('servers._form', ['server' => $server, 'cancelUrl' => route('dashboard')])
         </form>
     </div>
 @endsection

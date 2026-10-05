@@ -97,7 +97,7 @@ class ServerController extends Controller
 
         $this->syncDeployedApps($server, $apps);
 
-        return redirect()->route('servers.show', $server)->with('status', 'Server added.');
+        return redirect()->route('dashboard')->with('status', 'Server added.');
     }
 
     public function show(Server $server): View
@@ -132,7 +132,7 @@ class ServerController extends Controller
 
         $this->syncDeployedApps($server, $apps);
 
-        return redirect()->route('servers.show', $server)->with('status', 'Server updated.');
+        return redirect()->route('dashboard')->with('status', 'Server updated.');
     }
 
     public function destroy(Server $server): RedirectResponse

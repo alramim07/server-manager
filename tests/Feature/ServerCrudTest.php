@@ -36,7 +36,7 @@ class ServerCrudTest extends TestCase
 
         $response = $this->actingAs($user)->post('/servers', $this->validPayload());
 
-        $response->assertRedirect(route('servers.show', Server::firstWhere('ip_address', '203.0.113.10')));
+        $response->assertRedirect('/dashboard');
         $this->assertDatabaseHas('servers', [
             'name' => 'web-prod-01',
             'ip_address' => '203.0.113.10',
@@ -95,7 +95,7 @@ class ServerCrudTest extends TestCase
 
         $this->actingAs($user)
             ->put("/servers/{$server->id}", $this->validPayload(['deployed_apps' => ['only-this']]))
-            ->assertRedirect(route('servers.show', $server));
+            ->assertRedirect('/dashboard');
 
         $this->assertSame(['only-this'], $server->deployedApps()->pluck('name')->all());
     }
@@ -116,7 +116,7 @@ class ServerCrudTest extends TestCase
         $server = Server::factory()->create(['owner_id' => $user->id, 'name' => 'old-name']);
 
         $this->actingAs($user)->put("/servers/{$server->id}", $this->validPayload(['name' => 'new-name']))
-            ->assertRedirect(route('servers.show', $server));
+            ->assertRedirect('/dashboard');
 
         $this->assertDatabaseHas('servers', ['id' => $server->id, 'name' => 'new-name']);
     }
@@ -175,7 +175,7 @@ class ServerCrudTest extends TestCase
                 'name' => 'my-server',
                 'ip_address' => '203.0.113.42',
             ]))
-            ->assertRedirect(route('servers.show', $server))
+            ->assertRedirect('/dashboard')
             ->assertSessionHasNoErrors();
 
         $this->assertDatabaseHas('servers', [
@@ -225,14 +225,20 @@ class ServerCrudTest extends TestCase
             ->assertOk()
             ->assertSee($server->ip_address)
             ->assertSee('value="app-1"', false)
-            ->assertSee('+ Add app');
+            ->assertSee('+ Add app')
+            ->assertSee('href="'.route('dashboard').'" class="rounded-md border', false)
+            ->assertDontSee('href="'.route('servers.show', $server).'"', false);
     }
 
     public function test_create_page_renders(): void
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->get('/servers/create')->assertOk()->assertSee('<h1', false)->assertSee('New server');
+        $this->actingAs($user)->get('/servers/create')
+            ->assertOk()
+            ->assertSee('<h1', false)
+            ->assertSee('New server')
+            ->assertSee('href="'.route('dashboard').'" class="rounded-md border', false);
     }
 
     public function test_validation_failure_redirects_back_with_old_input(): void
