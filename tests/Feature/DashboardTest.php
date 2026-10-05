@@ -112,7 +112,19 @@ class DashboardTest extends TestCase
             ->assertSee('server-details-dialog', false)
             ->assertSee('data-details-for="'.$server->id.'"', false)
             ->assertSee('id="server-details-'.$server->id.'"', false)
-            ->assertSee('Deployed apps (');
+            ->assertSee('Deployed apps (')
+            ->assertSee('href="'.route('servers.edit', $server).'"', false);
+    }
+
+    public function test_details_template_hides_edit_button_for_foreign_servers(): void
+    {
+        $member = User::factory()->create();
+        $server = Server::factory()->create();
+
+        $this->actingAs($member)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertDontSee('href="'.route('servers.edit', $server).'"', false);
     }
 
     public function test_dashboard_sorts_by_renewal_date_ascending(): void

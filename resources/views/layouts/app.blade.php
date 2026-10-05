@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Dashboard') · srv.mgr</title>
+    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMyNTYzZWIiLz48dGV4dCB4PSIzMiIgeT0iNDMiIGZvbnQtZmFtaWx5PSJBcmlhbCxIZWx2ZXRpY2Esc2Fucy1zZXJpZiIgZm9udC1zaXplPSIzMCIgZm9udC13ZWlnaHQ9IjgwMCIgZmlsbD0iI2ZmZmZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+U008L3RleHQ+PC9zdmc+">
     <script>
         (function () {
             var fallback = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -22,7 +23,8 @@
 <body class="min-h-screen bg-slate-100 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
     <header class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div class="mx-auto flex min-h-14 max-w-7xl flex-wrap items-center gap-4 px-4 py-2 sm:gap-6">
-            <a href="{{ route('dashboard') }}" class="text-lg font-extrabold tracking-tight">srv.mgr</a>
+            <a href="{{ route('dashboard') }}" aria-label="srv.mgr dashboard"
+                class="rounded-md bg-blue-600 px-2.5 py-1 text-sm font-black tracking-tight text-white">SM</a>
 
             @auth
                 <nav class="flex flex-wrap items-center gap-1 text-sm">

@@ -184,7 +184,7 @@
                 <div class="space-y-4">
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <h2 class="text-lg font-bold">{{ $server->name }}</h2>
+                            <h2 class="text-lg font-bold text-slate-900 dark:text-slate-50">{{ $server->name }}</h2>
                             <p class="text-xs text-slate-500 dark:text-slate-400">Added {{ $server->created_at->format('M j, Y H:i') }}</p>
                         </div>
                         <span class="whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium {{ $server->status->badgeClass() }}">
@@ -194,32 +194,32 @@
 
                     <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                         <div>
-                            <dt class="text-xs font-medium text-slate-500 dark:text-slate-400">IP address</dt>
-                            <dd class="mt-0.5 font-mono">{{ $server->ip_address }}</dd>
+                            <dt class="text-xs font-medium text-slate-600 dark:text-slate-300">IP address</dt>
+                            <dd class="mt-0.5 font-mono text-slate-900 dark:text-slate-50">{{ $server->ip_address }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs font-medium text-slate-500 dark:text-slate-400">Operating system</dt>
-                            <dd class="mt-0.5">{{ $server->operating_system }}</dd>
+                            <dt class="text-xs font-medium text-slate-600 dark:text-slate-300">Operating system</dt>
+                            <dd class="mt-0.5 text-slate-900 dark:text-slate-50">{{ $server->operating_system }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs font-medium text-slate-500 dark:text-slate-400">Provider</dt>
-                            <dd class="mt-0.5">{{ $server->provider }}</dd>
+                            <dt class="text-xs font-medium text-slate-600 dark:text-slate-300">Provider</dt>
+                            <dd class="mt-0.5 text-slate-900 dark:text-slate-50">{{ $server->provider }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs font-medium text-slate-500 dark:text-slate-400">Renewal date</dt>
+                            <dt class="text-xs font-medium text-slate-600 dark:text-slate-300">Renewal date</dt>
                             <dd class="mt-0.5 {{ $server->renewalUrgency()->textClass() }}">{{ $server->renewal_date?->format('Y-m-d') ?? '—' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs font-medium text-slate-500 dark:text-slate-400">Owner</dt>
-                            <dd class="mt-0.5">{{ $server->owner?->name ?? '—' }}</dd>
+                            <dt class="text-xs font-medium text-slate-600 dark:text-slate-300">Owner</dt>
+                            <dd class="mt-0.5 text-slate-900 dark:text-slate-50">{{ $server->owner?->name ?? '—' }}</dd>
                         </div>
                     </dl>
 
                     <div>
-                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <p class="text-xs font-medium text-slate-600 dark:text-slate-300">
                             Deployed apps ({{ $server->deployedApps->count() }})
                         </p>
-                        <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm">
+                        <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-900 dark:text-slate-50">
                             @forelse ($server->deployedApps as $app)
                                 <li>{{ $app->name }}</li>
                             @empty
@@ -229,8 +229,17 @@
                     </div>
 
                     <div>
-                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Notes</p>
-                        <p class="mt-1 text-sm">{{ $server->notes ?: '—' }}</p>
+                        <p class="text-xs font-medium text-slate-600 dark:text-slate-300">Notes</p>
+                        <p class="mt-1 text-sm text-slate-900 dark:text-slate-50">{{ $server->notes ?: '—' }}</p>
+                    </div>
+
+                    <div class="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
+                        @can('update', $server)
+                            <a href="{{ route('servers.edit', $server) }}"
+                                class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500">Edit</a>
+                        @endcan
+                        <button type="button" data-details-close
+                            class="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-900 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">Close</button>
                     </div>
                 </div>
             </template>
