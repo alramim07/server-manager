@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\RenewalUrgency;
 use App\Enums\ServerStatus;
 use App\Models\Server;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -12,6 +13,12 @@ use Tests\TestCase;
 class ServerPersistenceTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
+    }
 
     public function test_it_persists_a_server_and_reloads_it_with_casts_working(): void
     {
@@ -37,6 +44,8 @@ class ServerPersistenceTest extends TestCase
         $this->assertInstanceOf(ServerStatus::class, $fresh->status);
         $this->assertSame(ServerStatus::PaymentRequired, $fresh->status);
         $this->assertSame('2026-11-04', $fresh->renewal_date->format('Y-m-d'));
+
+        Carbon::setTestNow('2026-10-05 12:00:00');
 
         $urgency = $fresh->renewalUrgency();
         $this->assertInstanceOf(RenewalUrgency::class, $urgency);
