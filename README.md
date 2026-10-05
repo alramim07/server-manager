@@ -21,6 +21,7 @@ Implemented so far:
 - Domain core: `Server` model, `ServerStatus` enum, renewal-urgency logic, factories
 - Authentication: register (first user becomes admin), login, logout, role column
 - Dark/light theme shell with top navigation
+- Authorization: members manage their own servers, admins manage all
 
 ## Setup
 
