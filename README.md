@@ -18,6 +18,7 @@ via `DB_*` in `.env`).
 Implemented so far:
 
 - Project baseline and test harness (`php artisan test` green)
+- Domain core: `Server` model, `ServerStatus` enum, renewal-urgency logic, factories
 
 ## Setup
 
