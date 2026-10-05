@@ -13,6 +13,11 @@
 /.superpowers
 /docs
 /.opencode
+/.agents
+/.claude
+/.mcp.json
+/boost.json
+/opencode.json
 /.vscode
 /.zed
 /auth.json
