@@ -46,7 +46,9 @@
                     </form>
                 @else
                     <a href="{{ route('login') }}" class="rounded-md px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800">Log in</a>
-                    <a href="{{ route('register') }}" class="rounded-md bg-blue-600 px-3 py-1.5 text-white hover:bg-blue-500">Register</a>
+                    @if (config('app.registration_enabled'))
+                        <a href="{{ route('register') }}" class="rounded-md bg-blue-600 px-3 py-1.5 text-white hover:bg-blue-500">Register</a>
+                    @endif
                 @endauth
             </div>
         </div>

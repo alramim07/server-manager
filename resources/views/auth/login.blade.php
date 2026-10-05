@@ -25,7 +25,9 @@
 
             <button class="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500">Log in</button>
 
-            <p class="text-sm text-slate-500 dark:text-slate-400">No account yet? <a href="{{ route('register') }}" class="text-blue-600 hover:underline dark:text-blue-400">Register</a></p>
+            @if (config('app.registration_enabled'))
+                <p class="text-sm text-slate-500 dark:text-slate-400">No account yet? <a href="{{ route('register') }}" class="text-blue-600 hover:underline dark:text-blue-400">Register</a></p>
+            @endif
         </form>
     </div>
 @endsection

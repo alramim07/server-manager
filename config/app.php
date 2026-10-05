@@ -123,4 +123,24 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Public Demo
+    |--------------------------------------------------------------------------
+    |
+    | Registration can be disabled for public demos, demo credentials can be
+    | surfaced on the login screen, and idle sessions reset the demo data.
+    |
+    */
+
+    'registration_enabled' => env('REGISTRATION_ENABLED', true),
+
+    'demo_enabled' => env('APP_DEMO', false),
+
+    'demo_email' => env('DEMO_EMAIL', 'demo@example.com'),
+
+    'demo_password' => env('DEMO_PASSWORD', 'demo1234'),
+
+    'demo_idle_minutes' => env('DEMO_IDLE_MINUTES', 10),
+
 ];

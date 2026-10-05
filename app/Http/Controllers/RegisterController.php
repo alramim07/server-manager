@@ -12,11 +12,15 @@ class RegisterController extends Controller
 {
     public function create(): View
     {
+        abort_unless(config('app.registration_enabled'), 404);
+
         return view('auth.register');
     }
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(config('app.registration_enabled'), 404);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:80'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
