@@ -9,3 +9,9 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+@layer base {
+    :where(a, button, input, select, textarea, summary):focus-visible {
+        @apply outline-2 outline-offset-2 outline-blue-600 dark:outline-blue-400;
+    }
+}

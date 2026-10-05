@@ -11,12 +11,12 @@
 
     <div class="mx-auto max-w-3xl">
         <div class="mb-4 flex items-center justify-between gap-4">
-            <a href="{{ route('dashboard') }}" class="text-sm text-blue-600 hover:underline">&larr; Back to servers</a>
+            <a href="{{ route('dashboard') }}" class="text-sm text-blue-600 hover:underline dark:text-blue-400">&larr; Back to servers</a>
 
             <div class="flex gap-2">
                 @can('update', $server)
                     <a href="{{ route('servers.edit', $server) }}"
-                        class="rounded-md border border-slate-300 px-4 py-2 text-sm dark:border-slate-700">Edit</a>
+                        class="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">Edit</a>
                 @endcan
                 @can('delete', $server)
                     <form method="POST" action="{{ route('servers.destroy', $server) }}"
@@ -24,7 +24,7 @@
                         @csrf
                         @method('DELETE')
                         <button type="submit"
-                            class="rounded-md border border-rose-300 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950">Delete</button>
+                            class="rounded-md border border-rose-300 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950">Delete</button>
                     </form>
                 @endcan
             </div>

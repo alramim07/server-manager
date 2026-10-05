@@ -108,7 +108,7 @@
         </div>
     @else
         <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <table class="w-full text-left text-sm">
+            <table class="w-full min-w-[56rem] text-left text-sm">
                 <thead class="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-800 dark:text-slate-400">
                     <tr>
                         <th class="px-4 py-3 font-medium">
@@ -136,7 +136,7 @@
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50{{ $warning ? ' bg-rose-50 dark:bg-rose-950/40' : '' }}"
                             @if ($warning) data-billing-warning="1" @endif>
                             <td class="px-4 py-3">
-                                <a href="{{ route('servers.show', $server) }}" class="font-medium text-blue-600 hover:underline">{{ $server->name }}</a>
+                                <a href="{{ route('servers.show', $server) }}" class="font-medium text-blue-600 hover:underline dark:text-blue-400">{{ $server->name }}</a>
                             </td>
                             <td class="px-4 py-3">
                                 <span class="whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium {{ $server->status->badgeClass() }}">
@@ -169,7 +169,7 @@
                                             data-server-name="{{ $server->name }}" data-server-ip="{{ $server->ip_address }}">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-rose-600 hover:underline">Delete</button>
+                                            <button type="submit" class="text-rose-600 hover:underline dark:text-rose-400">Delete</button>
                                         </form>
                                     @endcan
                                 </div>
