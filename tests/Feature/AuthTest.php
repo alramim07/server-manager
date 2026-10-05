@@ -120,10 +120,12 @@ class AuthTest extends TestCase
     {
         User::factory()->create(['email' => 'ada@example.com', 'password' => 'secret-password']);
 
-        $this->from('/dashboard')->post('/login', [
+        $this->get('/');
+
+        $this->post('/login', [
             'email' => 'ada@example.com',
             'password' => 'secret-password',
-        ])->assertRedirect('/dashboard');
+        ])->assertRedirect('/');
     }
 
     public function test_session_id_changes_after_login(): void
