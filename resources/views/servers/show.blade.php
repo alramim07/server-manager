@@ -11,7 +11,7 @@
 
     <div class="mx-auto max-w-3xl">
         <div class="mb-4 flex items-center justify-between gap-4">
-            <a href="{{ route('servers.index') }}" class="text-sm text-blue-600 hover:underline">&larr; Back to servers</a>
+            <a href="{{ route('dashboard') }}" class="text-sm text-blue-600 hover:underline">&larr; Back to servers</a>
 
             <div class="flex gap-2">
                 @can('update', $server)

@@ -26,10 +26,7 @@ class DashboardTest extends TestCase
             ->assertSee('Payment required')
             ->assertSee('Renewals due');
 
-        // exact stat values inside their cards (avoid substring collisions with dates/IPs)
-        $response->assertSee('>4<', false);   // total
-        $response->assertSee('>2<', false);   // active
-        $response->assertSee('>10<', false);  // apps sum
+        $response->assertViewHas('stats', fn (array $s) => $s['total'] === 4 && $s['active'] === 2 && $s['apps'] === 10);
     }
 
     public function test_dashboard_filters_by_status(): void
@@ -161,10 +158,10 @@ class DashboardTest extends TestCase
         Server::factory()->create(['renewal_date' => now()->addDays(90)->format('Y-m-d')]);
         Server::factory()->create(['renewal_date' => null]);
 
-        $this->actingAs($user)->get('/dashboard')->assertOk()->assertSee('Renewals due');
+        $response = $this->actingAs($user)->get('/dashboard');
 
-        $this->assertSame(1, Server::whereNotNull('renewal_date')
-            ->whereDate('renewal_date', '<=', now()->addDays(30)->toDateString())->count());
+        $response->assertOk()->assertSee('Renewals due');
+        $response->assertViewHas('stats', fn (array $s) => $s['dueSoon'] === 1);
     }
 
     public function test_guests_are_redirected_from_dashboard(): void
@@ -195,5 +192,67 @@ class DashboardTest extends TestCase
         // billing warning rows carry an explicit marker plus a rose background class
         $response->assertSee('data-billing-warning="1"', false);
         $response->assertSee('bg-rose-50');
+    }
+
+    public function test_invalid_sort_and_direction_are_rejected(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->from('/dashboard')
+            ->get('/dashboard?sort=evil')
+            ->assertRedirect('/dashboard')
+            ->assertSessionHasErrors('sort');
+
+        $this->actingAs($user)
+            ->from('/dashboard')
+            ->get('/dashboard?dir=up')
+            ->assertRedirect('/dashboard')
+            ->assertSessionHasErrors('dir');
+    }
+
+    public function test_filter_validation_errors_surface_above_the_filters(): void
+    {
+        $user = User::factory()->create();
+
+        // NB: no session-error assertion between the failed request and the render —
+        // TestResponse::session() calls start(), and a second marshalErrorBag pass
+        // over the JSON-serialized bag replaces it with an empty one. Rejection is
+        // asserted separately in test_invalid_sort_and_direction_are_rejected.
+        $this->actingAs($user)
+            ->from('/dashboard')
+            ->get('/dashboard?sort=evil');
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('bg-amber-100', false)
+            ->assertSee('The selected sort is invalid');
+    }
+
+    public function test_search_input_is_escaped(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/dashboard?q="><script>alert(1)</script>');
+
+        $response->assertOk();
+        // the raw payload must never reach the output; its escaped form must
+        $response->assertDontSee('<script>alert(1)</script>', false);
+        $response->assertSee('&lt;script&gt;', false);
+    }
+
+    public function test_pagination_links_preserve_filter_query(): void
+    {
+        $user = User::factory()->create();
+        Server::factory()->count(16)->create(['status' => ServerStatus::Active]);
+
+        $response = $this->actingAs($user)->get('/dashboard?status=active&page=2');
+
+        $response->assertOk();
+
+        $servers = $response->viewData('servers');
+        $this->assertCount(1, $servers->items());
+        $this->assertStringContainsString('status=active', (string) $servers->links());
     }
 }

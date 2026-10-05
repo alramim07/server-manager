@@ -10,6 +10,14 @@
     @endif
 
     @php
+        $cards = [
+            ['label' => 'Total servers', 'value' => $stats['total'], 'class' => 'text-slate-900 dark:text-slate-100'],
+            ['label' => 'Active', 'value' => $stats['active'], 'class' => 'text-emerald-600 dark:text-emerald-400'],
+            ['label' => 'Payment required', 'value' => $stats['payment'], 'class' => 'text-rose-600 dark:text-rose-400'],
+            ['label' => 'Inactive', 'value' => $stats['inactive'], 'class' => 'text-slate-500 dark:text-slate-400'],
+            ['label' => 'Apps deployed', 'value' => $stats['apps'], 'class' => 'text-blue-600 dark:text-blue-400'],
+            ['label' => 'Renewals due ≤30d', 'value' => $stats['dueSoon'], 'class' => 'text-amber-600 dark:text-amber-400'],
+        ];
         $sortUrl = fn (string $column) => request()->fullUrlWithQuery([
             'sort' => $column,
             'dir' => $filters['sort'] === $column && $filters['dir'] === 'asc' ? 'desc' : 'asc',
@@ -23,31 +31,20 @@
 
     {{-- Stat cards --}}
     <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-xs text-slate-500 dark:text-slate-400">Total servers</p>
-            <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $stats['total'] }}</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-xs text-slate-500 dark:text-slate-400">Active</p>
-            <p class="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ $stats['active'] }}</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-xs text-slate-500 dark:text-slate-400">Payment required</p>
-            <p class="mt-1 text-2xl font-bold text-rose-600 dark:text-rose-400">{{ $stats['payment'] }}</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-xs text-slate-500 dark:text-slate-400">Inactive</p>
-            <p class="mt-1 text-2xl font-bold text-slate-500 dark:text-slate-400">{{ $stats['inactive'] }}</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-xs text-slate-500 dark:text-slate-400">Apps deployed</p>
-            <p class="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $stats['apps'] }}</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-xs text-slate-500 dark:text-slate-400">Renewals due ≤30d</p>
-            <p class="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">{{ $stats['dueSoon'] }}</p>
-        </div>
+        @foreach ($cards as $card)
+            <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                <p class="text-xs text-slate-500 dark:text-slate-400">{{ $card['label'] }}</p>
+                <p class="mt-1 text-2xl font-bold {{ $card['class'] }}">{{ $card['value'] }}</p>
+            </div>
+        @endforeach
     </div>
+
+    {{-- Filter validation errors --}}
+    @if ($errors->any())
+        <div class="mb-4 rounded-md bg-amber-100 px-4 py-2 text-sm text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+            {{ $errors->first() }}
+        </div>
+    @endif
 
     {{-- Filter bar --}}
     <form method="GET" action="{{ route('dashboard') }}" class="mb-4 flex flex-wrap items-center gap-2">
