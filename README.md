@@ -19,6 +19,8 @@ Implemented so far:
 
 - Project baseline and test harness (`php artisan test` green)
 - Domain core: `Server` model, `ServerStatus` enum, renewal-urgency logic, factories
+- Authentication: register (first user becomes admin), login, logout, role column
+- Dark/light theme shell with top navigation
 
 ## Setup
 
