@@ -70,14 +70,6 @@ php artisan test            # 66 tests (SQLite in-memory), or: composer test
 vendor/bin/pint             # code style (check: vendor/bin/pint --test)
 ```
 
-## Security posture
-
-Registration is **open**: anyone who can reach the instance can create an account, and
-the first registered user becomes admin. This is intentional for v1 and suitable for
-trusted / private deployments (LAN, VPN, single team). Before any public exposure,
-tighten access — disable or gate registration, and put the app behind SSO or a reverse
-proxy with auth.
-
 ## Architecture
 
 - **Routes** (`routes/web.php`) — guest-only auth routes (hand-rolled, three small
@@ -94,11 +86,11 @@ proxy with auth.
   delete dialog, and friends. Styling is Tailwind 4 with a `dark:` variant bound to
   `data-theme`.
 
-## Repository notes
+## Status
+This project is in active development. In future it will add with my "Tools Management System"
 
-Planning docs (plans, specs, agent scratch files) live in `/docs` and `/.superpowers`
-and are **gitignored on purpose** — they never ship in this repository.
+`Git Repo: https://github.com/alramim07/tools-management-system`
 
 ## License
 
-MIT — see `composer.json`.
+This project is released under the MIT License. Feel free to fork, contribute, and use in your own projects.
