@@ -11,7 +11,11 @@ class DemoLoginTest extends TestCase
 
     public function test_login_page_shows_demo_credentials_when_enabled(): void
     {
-        config(['app.demo_enabled' => true]);
+        config([
+            'app.demo_enabled' => true,
+            'app.demo_email' => 'demo@example.com',
+            'app.demo_password' => 'demo1234',
+        ]);
 
         $response = $this->get(route('login'));
 
@@ -23,7 +27,11 @@ class DemoLoginTest extends TestCase
 
     public function test_login_form_is_prefilled_when_enabled(): void
     {
-        config(['app.demo_enabled' => true]);
+        config([
+            'app.demo_enabled' => true,
+            'app.demo_email' => 'demo@example.com',
+            'app.demo_password' => 'demo1234',
+        ]);
 
         $this->get(route('login'))
             ->assertOk()
@@ -38,6 +46,7 @@ class DemoLoginTest extends TestCase
         $this->get(route('login'))
             ->assertOk()
             ->assertDontSee('Demo access')
+            ->assertDontSee('demo@example.com')
             ->assertDontSee('demo1234');
     }
 }
