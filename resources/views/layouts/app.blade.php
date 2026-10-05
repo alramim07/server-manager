@@ -6,8 +6,14 @@
     <title>@yield('title', 'Dashboard') · srv.mgr</title>
     <script>
         (function () {
-            var stored = localStorage.getItem('theme');
-            var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            var fallback = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            var theme = fallback;
+            try {
+                var stored = localStorage.getItem('theme');
+                theme = stored === 'dark' || stored === 'light' ? stored : fallback;
+            } catch (e) {
+                /* storage unavailable (private mode) — keep fallback */
+            }
             document.documentElement.dataset.theme = theme;
         })();
     </script>

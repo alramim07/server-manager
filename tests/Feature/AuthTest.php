@@ -17,7 +17,7 @@ class AuthTest extends TestCase
 
     public function test_guests_see_the_login_page(): void
     {
-        $this->get('/login')->assertOk()->assertSee('Log in');
+        $this->get('/login')->assertOk()->assertSee('No account yet?');
     }
 
     public function test_users_can_register_and_the_first_user_becomes_admin(): void
@@ -99,5 +99,45 @@ class AuthTest extends TestCase
 
         $this->actingAs($user)->post('/logout')->assertRedirect('/login');
         $this->assertGuest();
+    }
+
+    public function test_register_ignores_a_posted_role(): void
+    {
+        User::factory()->create(['email' => 'first@example.com']);
+
+        $this->post('/register', [
+            'name' => 'Mallory',
+            'email' => 'mallory@example.com',
+            'password' => 'secret-password',
+            'password_confirmation' => 'secret-password',
+            'role' => 'admin',
+        ])->assertRedirect('/dashboard');
+
+        $this->assertSame('member', User::firstWhere('email', 'mallory@example.com')->role);
+    }
+
+    public function test_login_redirects_to_the_intended_page(): void
+    {
+        User::factory()->create(['email' => 'ada@example.com', 'password' => 'secret-password']);
+
+        $this->from('/dashboard')->post('/login', [
+            'email' => 'ada@example.com',
+            'password' => 'secret-password',
+        ])->assertRedirect('/dashboard');
+    }
+
+    public function test_session_id_changes_after_login(): void
+    {
+        User::factory()->create(['email' => 'ada@example.com', 'password' => 'secret-password']);
+
+        $this->get('/login');
+        $before = session()->getId();
+
+        $this->post('/login', [
+            'email' => 'ada@example.com',
+            'password' => 'secret-password',
+        ]);
+
+        $this->assertNotSame($before, session()->getId());
     }
 }
