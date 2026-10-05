@@ -33,6 +33,14 @@ class ServerSeeder extends Seeder
 
     private const PROVIDERS = ['Hetzner', 'DigitalOcean', 'Contabo', 'Vultr', 'Linode'];
 
+    private const APP_POOL = [
+        'nginx-proxy', 'postgres', 'redis', 'grafana', 'node-api', 'wordpress', 'gitea',
+        'nextcloud', 'caddy', 'prometheus', 'mysql', 'minio', 'uptime-kuma', 'wireguard',
+        'vaultwarden', 'portainer', 'matomo', 'ghost', 'airflow', 'keycloak', 'elastic',
+        'kibana', 'adminer', 'outline', 'discourse', 'n8n', 'linkding', 'immich',
+        'jellyfin', 'navidrome', 'paperless', 'beszel', 'homepage', 'rsync', 'mailcow', 'restic',
+    ];
+
     /**
      * Create 50 realistic demo servers owned by the first admin user.
      *
@@ -49,17 +57,20 @@ class ServerSeeder extends Seeder
         }
 
         foreach ($this->distribution() as $index => $status) {
-            Server::create([
+            $server = Server::create([
                 'owner_id' => $owner->id,
                 'name' => $this->name($index),
                 'ip_address' => fake()->unique()->ipv4(),
                 'operating_system' => fake()->randomElement(self::OPERATING_SYSTEMS),
                 'provider' => fake()->randomElement(self::PROVIDERS),
                 'status' => $status,
-                'deployed_apps_count' => fake()->numberBetween(0, 12),
                 'renewal_date' => $this->renewalDate($index),
                 'notes' => fake()->boolean(40) ? fake()->sentence() : null,
             ]);
+
+            foreach ($this->appNames(fake()->numberBetween(0, 12)) as $appName) {
+                $server->deployedApps()->create(['name' => $appName]);
+            }
         }
 
         $this->command?->info("Seeded 50 demo servers owned by {$owner->email}.");
@@ -100,5 +111,23 @@ class ServerSeeder extends Seeder
             9 => null,
             default => fake()->dateTimeBetween('+31 days', '+180 days')->format('Y-m-d'),
         };
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function appNames(int $count): array
+    {
+        $poolSize = count(self::APP_POOL);
+        $names = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $base = self::APP_POOL[$i % $poolSize];
+            $names[] = $i < $poolSize
+                ? $base
+                : $base.'-'.(intdiv($i, $poolSize) + 1);
+        }
+
+        return $names;
     }
 }

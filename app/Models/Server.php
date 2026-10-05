@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'owner_id',
@@ -18,7 +19,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'operating_system',
     'provider',
     'status',
-    'deployed_apps_count',
     'renewal_date',
     'notes',
 ])]
@@ -40,6 +40,24 @@ class Server extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function deployedApps(): HasMany
+    {
+        return $this->hasMany(DeployedApp::class);
+    }
+
+    /**
+     * Persistently mark active servers past their renewal date as payment
+     * required, so badges, stats, and filters all reflect the expiry.
+     */
+    public static function flipExpiredToPaymentRequired(): void
+    {
+        static::query()
+            ->where('status', ServerStatus::Active)
+            ->whereNotNull('renewal_date')
+            ->whereDate('renewal_date', '<', now()->toDateString())
+            ->update(['status' => ServerStatus::PaymentRequired->value]);
     }
 
     public function renewalUrgency(): RenewalUrgency

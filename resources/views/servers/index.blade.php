@@ -25,8 +25,7 @@
         $sortMark = fn (string $column) => $filters['sort'] === $column ? ($filters['dir'] === 'asc' ? ' ↑' : ' ↓') : '';
         $hasFilters = $filters['status'] !== ''
             || $filters['provider'] !== ''
-            || $filters['q'] !== ''
-            || $filters['owner'] === 'mine';
+            || $filters['q'] !== '';
     @endphp
 
     {{-- Stat cards --}}
@@ -62,12 +61,6 @@
             @foreach ($providers as $providerOption)
                 <option value="{{ $providerOption }}" @selected($filters['provider'] === $providerOption)>{{ $providerOption }}</option>
             @endforeach
-        </select>
-
-        <select name="owner"
-            class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-            <option value="all" @selected($filters['owner'] === 'all')">Everyone's servers</option>
-            <option value="mine" @selected($filters['owner'] === 'mine')">Mine only</option>
         </select>
 
         <input type="text" name="q" value="{{ $filters['q'] }}" placeholder="Search name, IP, OS…"
@@ -153,6 +146,8 @@
                             <td class="px-4 py-3">{{ $server->owner?->name ?? '—' }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex gap-2 text-xs">
+                                    <button type="button" data-details-for="{{ $server->id }}"
+                                        class="text-blue-600 hover:underline dark:text-blue-400">Details</button>
                                     @can('update', $server)
                                         <form method="POST" action="{{ route('servers.status', $server) }}">
                                             @csrf
@@ -183,7 +178,65 @@
         <div class="mt-4">
             {{ $servers->links() }}
         </div>
+
+        @foreach ($servers as $server)
+            <template id="server-details-{{ $server->id }}">
+                <div class="space-y-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-lg font-bold">{{ $server->name }}</h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Added {{ $server->created_at->format('M j, Y H:i') }}</p>
+                        </div>
+                        <span class="whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium {{ $server->status->badgeClass() }}">
+                            &#9679; {{ $server->status->label() }}
+                        </span>
+                    </div>
+
+                    <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                        <div>
+                            <dt class="text-xs font-medium text-slate-500 dark:text-slate-400">IP address</dt>
+                            <dd class="mt-0.5 font-mono">{{ $server->ip_address }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium text-slate-500 dark:text-slate-400">Operating system</dt>
+                            <dd class="mt-0.5">{{ $server->operating_system }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium text-slate-500 dark:text-slate-400">Provider</dt>
+                            <dd class="mt-0.5">{{ $server->provider }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium text-slate-500 dark:text-slate-400">Renewal date</dt>
+                            <dd class="mt-0.5 {{ $server->renewalUrgency()->textClass() }}">{{ $server->renewal_date?->format('Y-m-d') ?? '—' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium text-slate-500 dark:text-slate-400">Owner</dt>
+                            <dd class="mt-0.5">{{ $server->owner?->name ?? '—' }}</dd>
+                        </div>
+                    </dl>
+
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">
+                            Deployed apps ({{ $server->deployedApps->count() }})
+                        </p>
+                        <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm">
+                            @forelse ($server->deployedApps as $app)
+                                <li>{{ $app->name }}</li>
+                            @empty
+                                <li class="list-none pl-0 text-slate-500 dark:text-slate-400">—</li>
+                            @endforelse
+                        </ul>
+                    </div>
+
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Notes</p>
+                        <p class="mt-1 text-sm">{{ $server->notes ?: '—' }}</p>
+                    </div>
+                </div>
+            </template>
+        @endforeach
     @endif
 
     @include('servers._delete-dialog')
+    @include('servers._details-dialog')
 @endsection

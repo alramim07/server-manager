@@ -54,9 +54,18 @@
                     <dd class="mt-1 text-sm">{{ $server->provider }}</dd>
                 </div>
 
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Deployed apps</dt>
-                    <dd class="mt-1 text-sm">{{ $server->deployed_apps_count }}</dd>
+                <div class="sm:col-span-2">
+                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Deployed apps
+                        ({{ $server->deployedApps->count() }})</dt>
+                    <dd class="mt-1 text-sm">
+                        <ul class="list-disc space-y-0.5 pl-5">
+                            @forelse ($server->deployedApps as $app)
+                                <li>{{ $app->name }}</li>
+                            @empty
+                                <li class="list-none pl-0 text-slate-500 dark:text-slate-400">—</li>
+                            @endforelse
+                        </ul>
+                    </dd>
                 </div>
 
                 <div>

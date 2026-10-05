@@ -21,9 +21,20 @@ class ServerFactory extends Factory
             'operating_system' => fake()->randomElement(['Ubuntu 24.04', 'Debian 12', 'AlmaLinux 9', 'Rocky Linux 9']),
             'provider' => fake()->randomElement(['Hetzner', 'DigitalOcean', 'Contabo', 'Vultr', 'Linode']),
             'status' => ServerStatus::Active,
-            'deployed_apps_count' => fake()->numberBetween(0, 8),
             'renewal_date' => fake()->dateTimeBetween('+5 days', '+90 days')->format('Y-m-d'),
             'notes' => fake()->optional()->sentence(),
         ];
+    }
+
+    /**
+     * Attach exactly $count deployed-app names to each created server.
+     */
+    public function withApps(int $count): static
+    {
+        return $this->afterCreating(function (Server $server) use ($count) {
+            foreach (range(1, $count) as $number) {
+                $server->deployedApps()->create(['name' => 'app-'.$number]);
+            }
+        });
     }
 }

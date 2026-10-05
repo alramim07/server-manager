@@ -19,7 +19,7 @@ class ServerCrudTest extends TestCase
             'operating_system' => 'Ubuntu 24.04',
             'provider' => 'Hetzner',
             'status' => 'active',
-            'deployed_apps_count' => 4,
+            'deployed_apps' => ['nginx', 'postgres', 'redis', 'grafana'],
             'renewal_date' => '2026-11-01',
             'notes' => 'primary web server',
         ];
@@ -43,6 +43,9 @@ class ServerCrudTest extends TestCase
             'owner_id' => $user->id,
             'status' => 'active',
         ]);
+
+        $server = Server::firstWhere('ip_address', '203.0.113.10');
+        $this->assertSame(['nginx', 'postgres', 'redis', 'grafana'], $server->deployedApps()->pluck('name')->all());
     }
 
     public function test_create_requires_valid_input(): void
@@ -55,10 +58,46 @@ class ServerCrudTest extends TestCase
             'operating_system' => '',
             'provider' => '',
             'status' => 'exploded',
-            'deployed_apps_count' => -1,
+            'deployed_apps' => [str_repeat('x', 81)],
         ])->assertSessionHasErrors([
-            'name', 'ip_address', 'operating_system', 'provider', 'status', 'deployed_apps_count',
+            'name', 'ip_address', 'operating_system', 'provider', 'status', 'deployed_apps.0',
         ]);
+    }
+
+    public function test_at_most_50_deployed_apps_are_allowed(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/servers', $this->validPayload([
+                'deployed_apps' => array_map(fn (int $i) => 'app-'.$i, range(1, 51)),
+            ]))
+            ->assertSessionHasErrors('deployed_apps');
+    }
+
+    public function test_deployed_apps_can_be_submitted_as_plain_text_lines(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post('/servers', $this->validPayload([
+            'deployed_apps' => null,
+            'deployed_apps_text' => "nginx\nredis\n\nnginx\n  caddy  \n",
+        ]))->assertSessionHasNoErrors();
+
+        $server = Server::firstWhere('ip_address', '203.0.113.10');
+        $this->assertSame(['nginx', 'redis', 'caddy'], $server->deployedApps()->pluck('name')->all());
+    }
+
+    public function test_updating_a_server_replaces_its_deployed_app_names(): void
+    {
+        $user = User::factory()->create();
+        $server = Server::factory()->withApps(2)->create(['owner_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->put("/servers/{$server->id}", $this->validPayload(['deployed_apps' => ['only-this']]))
+            ->assertRedirect(route('servers.show', $server));
+
+        $this->assertSame(['only-this'], $server->deployedApps()->pluck('name')->all());
     }
 
     public function test_duplicate_ip_addresses_are_rejected(): void
@@ -180,9 +219,13 @@ class ServerCrudTest extends TestCase
     public function test_edit_page_renders(): void
     {
         $user = User::factory()->create();
-        $server = Server::factory()->create(['owner_id' => $user->id]);
+        $server = Server::factory()->withApps(1)->create(['owner_id' => $user->id]);
 
-        $this->actingAs($user)->get("/servers/{$server->id}/edit")->assertOk()->assertSee($server->ip_address);
+        $this->actingAs($user)->get("/servers/{$server->id}/edit")
+            ->assertOk()
+            ->assertSee($server->ip_address)
+            ->assertSee('value="app-1"', false)
+            ->assertSee('+ Add app');
     }
 
     public function test_create_page_renders(): void

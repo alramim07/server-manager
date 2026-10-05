@@ -3,24 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ServerStatus;
+use App\Models\DeployedApp;
 use App\Models\Server;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ServerController extends Controller
 {
     public function index(Request $request): View
     {
-        $user = $request->user();
+        Server::flipExpiredToPaymentRequired();
 
         $validated = $request->validate([
             'status' => ['nullable', Rule::enum(ServerStatus::class)],
             'provider' => ['nullable', 'string', 'max:80'],
-            'owner' => ['nullable', 'string', 'in:mine,all'],
             'q' => ['nullable', 'string', 'max:80'],
             'sort' => ['nullable', Rule::in(['name', 'status', 'renewal_date', 'deployed_apps_count', 'created_at'])],
             'dir' => ['nullable', 'string', 'in:asc,desc'],
@@ -28,10 +29,9 @@ class ServerController extends Controller
 
         $search = $validated['q'] ?? null;
 
-        $servers = Server::query()->with('owner')
+        $servers = Server::query()->with('owner', 'deployedApps')->withCount('deployedApps')
             ->when($validated['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
             ->when($validated['provider'] ?? null, fn ($q, $provider) => $q->where('provider', $provider))
-            ->when(($validated['owner'] ?? null) === 'mine', fn ($q) => $q->where('owner_id', $user->id))
             ->when($search, function ($q, $search) {
                 $like = '%'.$search.'%';
                 $q->where(fn ($w) => $w->where('name', 'like', $like)
@@ -56,14 +56,13 @@ class ServerController extends Controller
                 'active' => (int) ($statusCounts[ServerStatus::Active->value] ?? 0),
                 'payment' => (int) ($statusCounts[ServerStatus::PaymentRequired->value] ?? 0),
                 'inactive' => (int) ($statusCounts[ServerStatus::Inactive->value] ?? 0),
-                'apps' => (int) Server::sum('deployed_apps_count'),
+                'apps' => DeployedApp::count(),
                 'dueSoon' => Server::whereNotNull('renewal_date')
                     ->whereDate('renewal_date', '<=', now()->addDays(30)->toDateString())->count(),
             ],
             'filters' => [
                 'status' => $validated['status'] ?? '',
                 'provider' => $validated['provider'] ?? '',
-                'owner' => $validated['owner'] ?? 'all',
                 'q' => $validated['q'] ?? '',
                 'sort' => $validated['sort'] ?? '',
                 'dir' => $validated['dir'] ?? '',
@@ -84,15 +83,19 @@ class ServerController extends Controller
 
     public function create(): View
     {
-        return view('servers.create', ['providers' => $this->providers()]);
+        return view('servers.create');
     }
 
     public function store(Request $request): RedirectResponse
     {
+        [$fields, $apps] = $this->validateServer($request);
+
         $server = Server::create([
-            ...$this->validateServer($request),
+            ...$fields,
             'owner_id' => $request->user()->id,
         ]);
+
+        $this->syncDeployedApps($server, $apps);
 
         return redirect()->route('servers.show', $server)->with('status', 'Server added.');
     }
@@ -101,8 +104,11 @@ class ServerController extends Controller
     {
         Gate::authorize('view', $server);
 
+        Server::flipExpiredToPaymentRequired();
+        $server->refresh();
+
         return view('servers.show', [
-            'server' => $server->load('owner'),
+            'server' => $server->load('owner', 'deployedApps'),
         ]);
     }
 
@@ -112,7 +118,7 @@ class ServerController extends Controller
 
         return view('servers.edit', [
             'server' => $server,
-            'providers' => $this->providers(),
+            'appNames' => $server->deployedApps()->pluck('name')->all(),
         ]);
     }
 
@@ -120,7 +126,11 @@ class ServerController extends Controller
     {
         Gate::authorize('update', $server);
 
-        $server->update($this->validateServer($request, $server));
+        [$fields, $apps] = $this->validateServer($request, $server);
+
+        $server->update($fields);
+
+        $this->syncDeployedApps($server, $apps);
 
         return redirect()->route('servers.show', $server)->with('status', 'Server updated.');
     }
@@ -134,9 +144,14 @@ class ServerController extends Controller
         return redirect()->route('dashboard')->with('status', 'Server deleted.');
     }
 
+    /**
+     * Validate server fields and normalize the deployed-app names.
+     *
+     * @return array{0: array<string, mixed>, 1: array<int, string>}
+     */
     private function validateServer(Request $request, ?Server $server = null): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:80'],
             'ip_address' => [
                 'required',
@@ -151,10 +166,54 @@ class ServerController extends Controller
             'operating_system' => ['required', 'string', 'max:80'],
             'provider' => ['required', 'string', 'max:80'],
             'status' => ['required', Rule::enum(ServerStatus::class)],
-            'deployed_apps_count' => ['required', 'integer', 'min:0', 'max:100000'],
+            'deployed_apps' => ['nullable', 'array'],
+            'deployed_apps.*' => ['nullable', 'string', 'max:80'],
+            'deployed_apps_text' => ['nullable', 'string', 'max:6000'],
             'renewal_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
+
+        $apps = $this->normalizeDeployedApps(
+            $validated['deployed_apps'] ?? [],
+            $validated['deployed_apps_text'] ?? null,
+        );
+
+        unset($validated['deployed_apps'], $validated['deployed_apps_text']);
+
+        return [$validated, $apps];
+    }
+
+    /**
+     * @param  array<int, string|null>  $fields
+     * @return array<int, string>
+     */
+    private function normalizeDeployedApps(array $fields, ?string $text): array
+    {
+        $names = array_map(
+            fn ($name) => trim((string) $name),
+            [...$fields, ...($text !== null ? preg_split('/\R/u', $text) : [])],
+        );
+        $names = array_values(array_unique(array_filter($names, fn (string $name) => $name !== '')));
+
+        if (count($names) > 50) {
+            throw ValidationException::withMessages([
+                'deployed_apps' => 'You can list at most 50 deployed apps.',
+            ]);
+        }
+
+        return $names;
+    }
+
+    /**
+     * @param  array<int, string>  $names
+     */
+    private function syncDeployedApps(Server $server, array $names): void
+    {
+        $server->deployedApps()->delete();
+
+        foreach ($names as $name) {
+            $server->deployedApps()->create(['name' => $name]);
+        }
     }
 
     private function providers(): Collection

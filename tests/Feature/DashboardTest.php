@@ -15,9 +15,9 @@ class DashboardTest extends TestCase
     public function test_dashboard_shows_stat_card_counts(): void
     {
         $user = User::factory()->create();
-        Server::factory()->count(2)->create(['status' => ServerStatus::Active, 'deployed_apps_count' => 3]);
-        Server::factory()->create(['status' => ServerStatus::PaymentRequired, 'deployed_apps_count' => 4]);
-        Server::factory()->create(['status' => ServerStatus::Inactive, 'deployed_apps_count' => 0]);
+        Server::factory()->withApps(3)->count(2)->create(['status' => ServerStatus::Active]);
+        Server::factory()->withApps(4)->create(['status' => ServerStatus::PaymentRequired]);
+        Server::factory()->create(['status' => ServerStatus::Inactive]);
 
         $response = $this->actingAs($user)->get('/dashboard');
 
@@ -74,16 +74,45 @@ class DashboardTest extends TestCase
             ->assertOk()->assertSee('other-box')->assertDontSee('searchable-box');
     }
 
-    public function test_dashboard_owner_mine_filter(): void
+    public function test_expired_active_servers_flip_to_payment_required(): void
     {
         $user = User::factory()->create();
-        Server::factory()->create(['owner_id' => $user->id, 'name' => 'my-box']);
-        Server::factory()->create(['name' => 'their-box']);
+        $expired = Server::factory()->create([
+            'owner_id' => $user->id,
+            'name' => 'expired-box',
+            'status' => ServerStatus::Active,
+            'renewal_date' => now()->subDays(3)->format('Y-m-d'),
+        ]);
+        $fresh = Server::factory()->create([
+            'status' => ServerStatus::Active,
+            'renewal_date' => now()->addDays(60)->format('Y-m-d'),
+        ]);
+        $inactive = Server::factory()->create([
+            'status' => ServerStatus::Inactive,
+            'renewal_date' => now()->subDays(10)->format('Y-m-d'),
+        ]);
 
-        $this->actingAs($user)->get('/dashboard?owner=mine')
+        $response = $this->actingAs($user)->get('/dashboard');
+
+        $response->assertOk()->assertSee('expired-box');
+        $this->assertDatabaseHas('servers', ['id' => $expired->id, 'status' => 'payment_required']);
+        $this->assertDatabaseHas('servers', ['id' => $fresh->id, 'status' => 'active']);
+        $this->assertDatabaseHas('servers', ['id' => $inactive->id, 'status' => 'inactive']);
+        $response->assertViewHas('stats', fn (array $s) => $s['payment'] === 1 && $s['active'] === 1 && $s['inactive'] === 1);
+    }
+
+    public function test_dashboard_renders_details_dialog_and_row_templates(): void
+    {
+        $user = User::factory()->create();
+        $server = Server::factory()->create(['owner_id' => $user->id, 'name' => 'details-box']);
+
+        $this->actingAs($user)
+            ->get('/dashboard')
             ->assertOk()
-            ->assertSee('my-box')
-            ->assertDontSee('their-box');
+            ->assertSee('server-details-dialog', false)
+            ->assertSee('data-details-for="'.$server->id.'"', false)
+            ->assertSee('id="server-details-'.$server->id.'"', false)
+            ->assertSee('Deployed apps (');
     }
 
     public function test_dashboard_sorts_by_renewal_date_ascending(): void

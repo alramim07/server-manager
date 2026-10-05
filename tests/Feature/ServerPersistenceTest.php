@@ -22,7 +22,7 @@ class ServerPersistenceTest extends TestCase
 
     public function test_it_persists_a_server_and_reloads_it_with_casts_working(): void
     {
-        $server = Server::factory()->create([
+        $server = Server::factory()->withApps(2)->create([
             'status' => ServerStatus::PaymentRequired,
             'renewal_date' => '2026-11-04',
         ]);
@@ -35,15 +35,17 @@ class ServerPersistenceTest extends TestCase
             'operating_system' => $server->operating_system,
             'provider' => $server->provider,
             'status' => 'payment_required',
-            'deployed_apps_count' => $server->deployed_apps_count,
             'renewal_date' => '2026-11-04',
         ]);
+
+        $this->assertSame(['app-1', 'app-2'], $server->deployedApps()->pluck('name')->all());
 
         $fresh = Server::query()->findOrFail($server->id);
 
         $this->assertInstanceOf(ServerStatus::class, $fresh->status);
         $this->assertSame(ServerStatus::PaymentRequired, $fresh->status);
         $this->assertSame('2026-11-04', $fresh->renewal_date->format('Y-m-d'));
+        $this->assertSame(['app-1', 'app-2'], $fresh->deployedApps()->pluck('name')->all());
 
         Carbon::setTestNow('2026-10-05 12:00:00');
 
