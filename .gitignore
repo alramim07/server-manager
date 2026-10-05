@@ -18,6 +18,7 @@
 /.mcp.json
 /boost.json
 /opencode.json
+/.playwright-mcp
 /.vscode
 /.zed
 /auth.json
