@@ -9,7 +9,7 @@
         <form method="POST" action="{{ route('servers.store') }}">
             @csrf
 
-            @include('servers._form', ['server' => null, 'cancelUrl' => route('servers.index')])
+            @include('servers._form', ['server' => null, 'cancelUrl' => route('dashboard')])
         </form>
     </div>
 @endsection
