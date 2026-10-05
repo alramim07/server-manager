@@ -58,4 +58,51 @@ class ServerUrgencyTest extends TestCase
         $this->assertFalse($dueLater->billingWarning());
         $this->assertFalse($activeDueSoon->billingWarning());
     }
+
+    public function test_same_day_renewal_is_critical(): void
+    {
+        Carbon::setTestNow('2026-10-05 12:00:00');
+
+        $today = new Server(['renewal_date' => '2026-10-05']);
+
+        $this->assertSame(RenewalUrgency::Critical, $today->renewalUrgency());
+    }
+
+    public function test_seven_days_is_critical_and_eight_is_warning(): void
+    {
+        Carbon::setTestNow('2026-10-05 12:00:00');
+
+        $inSeven = new Server(['renewal_date' => '2026-10-12']);
+        $inEight = new Server(['renewal_date' => '2026-10-13']);
+
+        $this->assertSame(RenewalUrgency::Critical, $inSeven->renewalUrgency());
+        $this->assertSame(RenewalUrgency::Warning, $inEight->renewalUrgency());
+    }
+
+    public function test_billing_warning_boundary_is_exactly_fourteen_days(): void
+    {
+        Carbon::setTestNow('2026-10-05 12:00:00');
+
+        $atFourteen = new Server(['status' => ServerStatus::PaymentRequired, 'renewal_date' => '2026-10-19']);
+        $atFifteen = new Server(['status' => ServerStatus::PaymentRequired, 'renewal_date' => '2026-10-20']);
+
+        $this->assertTrue($atFourteen->billingWarning());
+        $this->assertFalse($atFifteen->billingWarning());
+    }
+
+    public function test_day_math_stays_correct_across_a_dst_transition(): void
+    {
+        $previousTimezone = date_default_timezone_get();
+        date_default_timezone_set('America/New_York');
+
+        try {
+            Carbon::setTestNow('2026-03-05 12:00:00');
+
+            $server = new Server(['renewal_date' => '2026-03-13']);
+
+            $this->assertSame(RenewalUrgency::Warning, $server->renewalUrgency());
+        } finally {
+            date_default_timezone_set($previousTimezone);
+        }
+    }
 }

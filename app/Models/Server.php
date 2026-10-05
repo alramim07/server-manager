@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\RenewalUrgency;
 use App\Enums\ServerStatus;
+use Carbon\Carbon;
 use Database\Factories\ServerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -64,8 +65,9 @@ class Server extends Model
 
     private function daysUntilRenewal(): int
     {
-        return (int) floor(
-            ($this->renewal_date->startOfDay()->getTimestamp() - now()->startOfDay()->getTimestamp()) / 86400
-        );
+        $renewalUtc = Carbon::createFromFormat('Y-m-d', $this->renewal_date->toDateString(), 'UTC')->startOfDay();
+        $todayUtc = Carbon::createFromFormat('Y-m-d', now()->toDateString(), 'UTC')->startOfDay();
+
+        return (int) (($renewalUtc->getTimestamp() - $todayUtc->getTimestamp()) / 86400);
     }
 }
