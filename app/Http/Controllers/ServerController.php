@@ -17,7 +17,6 @@ class ServerController extends Controller
     {
         return view('servers.index', [
             'servers' => Server::with('owner')->latest()->get(),
-            'providers' => $this->providers(),
         ]);
     }
 

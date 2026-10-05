@@ -19,10 +19,13 @@
                         class="rounded-md border border-slate-300 px-4 py-2 text-sm dark:border-slate-700">Edit</a>
                 @endcan
                 @can('delete', $server)
-                    <button type="button"
-                        data-delete-url="{{ route('servers.destroy', $server) }}"
-                        data-server-name="{{ $server->name }}"
-                        class="rounded-md border border-rose-300 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950">Delete</button>
+                    <form method="POST" action="{{ route('servers.destroy', $server) }}"
+                        data-server-name="{{ $server->name }}" data-server-ip="{{ $server->ip_address }}">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                            class="rounded-md border border-rose-300 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950">Delete</button>
+                    </form>
                 @endcan
             </div>
         </div>

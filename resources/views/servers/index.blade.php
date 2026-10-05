@@ -56,10 +56,12 @@
                                         <a href="{{ route('servers.edit', $server) }}" class="text-blue-600 hover:underline">Edit</a>
                                     @endcan
                                     @can('delete', $server)
-                                        <button type="button"
-                                            data-delete-url="{{ route('servers.destroy', $server) }}"
-                                            data-server-name="{{ $server->name }}"
-                                            class="text-rose-600 hover:underline">Delete</button>
+                                        <form method="POST" action="{{ route('servers.destroy', $server) }}"
+                                            data-server-name="{{ $server->name }}" data-server-ip="{{ $server->ip_address }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-rose-600 hover:underline">Delete</button>
+                                        </form>
                                     @endcan
                                 </div>
                             </td>

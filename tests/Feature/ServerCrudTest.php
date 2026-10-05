@@ -112,12 +112,66 @@ class ServerCrudTest extends TestCase
         $this->assertDatabaseHas('servers', ['id' => $server->id]);
     }
 
-    public function test_edit_page_and_show_page_render(): void
+    public function test_updating_a_server_may_keep_its_own_ip_address(): void
+    {
+        $user = User::factory()->create();
+        $server = Server::factory()->create([
+            'owner_id' => $user->id,
+            'name' => 'my-server',
+            'ip_address' => '203.0.113.42',
+        ]);
+
+        $this->actingAs($user)
+            ->put("/servers/{$server->id}", $this->validPayload([
+                'name' => 'my-server',
+                'ip_address' => '203.0.113.42',
+            ]))
+            ->assertRedirect(route('servers.show', $server))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('servers', [
+            'id' => $server->id,
+            'name' => 'my-server',
+            'ip_address' => '203.0.113.42',
+        ]);
+    }
+
+    public function test_index_page_renders_servers_delete_forms_and_flash(): void
+    {
+        $user = User::factory()->create();
+        $server = Server::factory()->create(['owner_id' => $user->id, 'name' => 'index-hero-box']);
+
+        $this->actingAs($user)
+            ->get('/servers')
+            ->assertOk()
+            ->assertSee($server->name)
+            ->assertSee('delete-dialog')
+            ->assertSee('action="'.route('servers.destroy', $server).'"', false);
+
+        $this->actingAs($user)
+            ->withSession(['status' => 'Server added.'])
+            ->get('/servers')
+            ->assertOk()
+            ->assertSee('Server added.');
+    }
+
+    public function test_show_page_renders(): void
     {
         $user = User::factory()->create();
         $server = Server::factory()->create(['owner_id' => $user->id]);
 
-        $this->actingAs($user)->get("/servers/{$server->id}")->assertOk()->assertSee($server->name);
+        $this->actingAs($user)
+            ->get("/servers/{$server->id}")
+            ->assertOk()
+            ->assertSee($server->name)
+            ->assertSee('action="'.route('servers.destroy', $server).'"', false);
+    }
+
+    public function test_edit_page_renders(): void
+    {
+        $user = User::factory()->create();
+        $server = Server::factory()->create(['owner_id' => $user->id]);
+
         $this->actingAs($user)->get("/servers/{$server->id}/edit")->assertOk()->assertSee($server->ip_address);
     }
 
@@ -125,7 +179,7 @@ class ServerCrudTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->get('/servers/create')->assertOk()->assertSee('New server');
+        $this->actingAs($user)->get('/servers/create')->assertOk()->assertSee('<h1', false)->assertSee('New server');
     }
 
     public function test_validation_failure_redirects_back_with_old_input(): void
@@ -134,9 +188,10 @@ class ServerCrudTest extends TestCase
 
         $this->actingAs($user)
             ->from('/servers/create')
-            ->post('/servers', ['name' => ''])
+            ->post('/servers', ['name' => 'my-web', 'ip_address' => 'not-an-ip'])
             ->assertRedirect('/servers/create')
-            ->assertSessionHasErrors('name');
+            ->assertSessionHasErrors('ip_address')
+            ->assertSessionHasInput('name', 'my-web');
     }
 
     public function test_guests_are_redirected_from_all_server_routes(): void
@@ -146,6 +201,8 @@ class ServerCrudTest extends TestCase
         $this->get('/servers')->assertRedirect('/login');
         $this->get('/servers/create')->assertRedirect('/login');
         $this->get("/servers/{$server->id}")->assertRedirect('/login');
+        $this->get("/servers/{$server->id}/edit")->assertRedirect('/login');
+        $this->put("/servers/{$server->id}", [])->assertRedirect('/login');
         $this->delete("/servers/{$server->id}")->assertRedirect('/login');
     }
 }

@@ -4,7 +4,8 @@
         @method('DELETE')
         <h2 class="text-lg font-semibold">Delete server?</h2>
         <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            You're about to permanently delete <strong id="delete-server-name"></strong>.
+            You're about to permanently delete <strong id="delete-server-name"></strong>
+            (<span id="delete-server-ip" class="font-mono"></span>).
             This can't be undone.
         </p>
         <div class="mt-6 flex justify-end gap-3">
@@ -20,14 +21,19 @@
     (function () {
         var dialog = document.getElementById('delete-dialog');
         if (!dialog) return;
-        document.querySelectorAll('[data-delete-url]').forEach(function (button) {
-            button.addEventListener('click', function () {
-                document.getElementById('delete-form').action = button.dataset.deleteUrl;
-                document.getElementById('delete-server-name').textContent = button.dataset.serverName;
-                dialog.showModal();
-            });
+
+        document.addEventListener('submit', function (e) {
+            var form = e.target;
+            if (!form.matches('form[data-server-name]')) return;
+            e.preventDefault();
+            document.getElementById('delete-form').action = form.action;
+            document.getElementById('delete-server-name').textContent = form.dataset.serverName;
+            document.getElementById('delete-server-ip').textContent = form.dataset.serverIp || '';
+            dialog.showModal();
         });
+
         document.getElementById('delete-cancel').addEventListener('click', function () { dialog.close(); });
+        dialog.addEventListener('click', function (e) { if (e.target === dialog) dialog.close(); });
     })();
 </script>
 @endpush
