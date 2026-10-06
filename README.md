@@ -5,6 +5,10 @@ addresses, operating systems, hosting providers, deployment status, and renewal 
 with summary stats and filters so billing trouble is spotted early. Built as a plain
 server-rendered Laravel app — no SPA, no external services.
 
+**Live demo:** https://server-manager-app.onrender.com  
+Demo credentials: `demo@example.com` / `demo1234` (pre-filled on the login page;
+registration is disabled and demo data resets after inactivity).
+
 ## Features
 
 - **Authentication & roles** — register / log in / log out; the first registered user
