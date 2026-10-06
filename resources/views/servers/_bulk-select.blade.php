@@ -2,7 +2,7 @@
     <button type="button" id="bulk-delete-btn"
         class="rounded-md bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500">Delete</button>
     <button type="button" id="bulk-unselect-btn"
-        class="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800">Unselect</button>
+        class="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800">Deselect</button>
 </div>
 
 @push('scripts')
