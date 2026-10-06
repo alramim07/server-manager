@@ -17,8 +17,7 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative
 FROM php:8.4-apache
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libonig-dev \
-    && docker-php-ext-install mbstring \
+    && (php -m | grep -qi '^mbstring$' || (apt-get install -y --no-install-recommends libonig-dev && docker-php-ext-install mbstring)) \
     && (php -m | grep -qi '^pdo_sqlite$' || (apt-get install -y --no-install-recommends libsqlite3-dev && docker-php-ext-install pdo_sqlite)) \
     && rm -rf /var/lib/apt/lists/* \
     && a2enmod rewrite \
