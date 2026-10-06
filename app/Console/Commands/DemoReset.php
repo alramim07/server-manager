@@ -25,6 +25,12 @@ class DemoReset extends Command
      */
     public function handle(): int
     {
+        if (! config('app.demo_enabled')) {
+            $this->components->warn('Demo mode is disabled - skipping reset.');
+
+            return self::SUCCESS;
+        }
+
         $this->call('migrate:fresh', ['--force' => true, '--seed' => true]);
 
         $this->components->info('Demo database reset to seed state.');

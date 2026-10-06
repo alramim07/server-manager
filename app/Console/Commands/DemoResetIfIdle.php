@@ -27,6 +27,18 @@ class DemoResetIfIdle extends Command
      */
     public function handle(): int
     {
+        if (! config('app.demo_enabled')) {
+            $this->components->warn('Demo mode is disabled - skipping reset.');
+
+            return self::SUCCESS;
+        }
+
+        if (config('session.driver') !== 'database') {
+            $this->components->warn('Session driver is not database - cannot verify idleness, skipping reset.');
+
+            return self::SUCCESS;
+        }
+
         $minutes = (int) config('app.demo_idle_minutes');
 
         if (! Schema::hasTable('sessions')) {

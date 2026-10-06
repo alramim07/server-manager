@@ -14,6 +14,16 @@ class DemoResetTest extends TestCase
 {
     use DatabaseMigrations;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'app.demo_enabled' => true,
+            'session.driver' => 'database',
+        ]);
+    }
+
     public function test_demo_reset_restores_the_seed_state(): void
     {
         User::factory()->create(['email' => 'stray@example.com']);
@@ -60,6 +70,17 @@ class DemoResetTest extends TestCase
         $this->artisan('demo:reset-if-idle')->assertSuccessful();
 
         $this->assertDatabaseHas('servers', ['name' => 'survivor']);
+    }
+
+    public function test_resets_are_skipped_when_demo_mode_is_disabled(): void
+    {
+        config(['app.demo_enabled' => false]);
+        Server::factory()->create(['name' => 'untouchable']);
+
+        $this->artisan('demo:reset')->assertSuccessful();
+        $this->artisan('demo:reset-if-idle')->assertSuccessful();
+
+        $this->assertDatabaseHas('servers', ['name' => 'untouchable']);
     }
 
     public function test_seeding_twice_does_not_duplicate_demo_data(): void
