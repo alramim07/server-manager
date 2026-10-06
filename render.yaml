@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: server-manager-demo
+    runtime: docker
+    plan: free
+    healthCheckPath: /up
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        value: https://server-manager-demo.onrender.com
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_DEMO
+        value: "true"
+      - key: REGISTRATION_ENABLED
+        value: "false"
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: MAIL_MAILER
+        value: log
